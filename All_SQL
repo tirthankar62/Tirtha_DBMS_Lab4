@@ -1,0 +1,71 @@
+3)	Display the total number of customers based on gender who have placed orders of worth at least Rs.3000.
+
+
+select count(c.cus_id), c.cus_gender
+from customers c join orders o using(cus_id)
+where o.ord_amount>=3000
+group by c.cus_gender
+
+4)	Display all the orders along with product name ordered by a customer having Customer_Id=2
+
+select o.*, c.*, p.pro_name
+from orders o
+join customer c using(cus_id)
+join supplier_pricing s using(pricing_id)
+join product p using(pro_id)
+where c.cus_id=2
+
+5)	Display the Supplier details who can supply more than one product.
+
+select sd.*, count(pd.pro_id) as prod_count
+from supplier sd
+join supplier_pricing sp using(supp_id)
+join product pd using(pro_id)
+group by sd.supp_id
+having prod_count > 1
+
+6)	Find the least expensive product from each category and print the table with category id, name, product name and price of the product
+
+select pd.*,  sp.supp_price, t1.cat_id, cd.cat_name from 
+product pd join
+supplier_pricing sp using(pro_id)
+join category cd using(cat_id)
+join
+(select cd.cat_id, min(sp.supp_price) as min_price
+from product pd
+join supplier_pricing sp using(pro_id)
+join category cd using(cat_id)
+group by cd.cat_id) as t1 on t1.min_price=sp.supp_price
+
+7)	Display the Id and Name of the Product ordered after “2021-10-05”.
+
+select od.*, pd.*
+from orders od
+join supplier_pricing sp using(pricing_id)
+join product pd using(pro_id)
+where od.ord_date>'2021-10-05'
+
+8)	Display customer name and gender whose names start or end with character 'A'.
+
+select c.cus_name, c.cus_gender
+from customer c
+where c.cus_name REGEXP '^A|A$'
+
+9)	Create a stored procedure to display supplier id, name, rating and Type_of_Service. For Type_of_Service, If rating =5, print “Excellent Service”,If rating >4 print “Good Service”, If rating >2 print “Average Service” else print “Poor Service”.
+
+
+DELIMITER &&  
+CREATE PROCEDURE get_supplier_quality ()  
+BEGIN
+select sp.supp_id, sp.supp_name, rt.rat_ratstars,
+CASE
+    WHEN rt.rat_ratstars >= 5 THEN "Excellent Service"
+    WHEN rt.rat_ratstars = 4 THEN "Good Service"
+    WHEN rt.rat_ratstars > 2 THEN "Average Service"
+    ELSE "Poor Service"
+END as Type_of_Service
+from supplier sp
+join supplier_pricing using(supp_id)
+join orders using(pricing_id)
+join rating rt using(ord_id);
+END && 
